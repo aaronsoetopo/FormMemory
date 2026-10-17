@@ -3,15 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>FormMemory – History</title>
   <link rel="stylesheet" href="history.css">
 </head>
 <body>
-  <main>
-    <h1>FormMemory</h1>
-    <p>Your saved Google Forms answers will appear here.</p>
-    <p id="count">Loading…</p>
-  </main>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <h1>FormMemory</h1>
+        <p id="count" class="count" aria-live="polite">Loading…</p>
+      </div>
+      <div class="actions">
+        <button type="button" id="export" class="btn">Export JSON</button>
+        <span id="delete-all-slot"></span>
+      </div>
+    </header>
+
+    <p class="privacy">
+      <span class="badge">Local only: nothing leaves your browser</span>
+      <span class="privacy-note">Entries are stored in this browser's extension storage. FormMemory has no server and no account.</span>
+    </p>
+
+    <div class="search">
+      <label for="search" class="visually-hidden">Search entries</label>
+      <input id="search" type="search" placeholder="Search forms, questions and answers  ( / )" autocomplete="off">
+    </div>
+
+    <div id="empty" class="empty" hidden>
+      <p id="empty-message" class="empty-title"></p>
+      <p id="empty-hint" class="empty-hint"></p>
+    </div>
+
+    <div id="layout" class="layout">
+      <nav id="list" class="list" aria-label="Saved entries"></nav>
+      <section id="detail" class="detail" aria-live="polite"></section>
+    </div>
+  </div>
   <script type="module" src="history.js"></script>
 </body>
 </html>
