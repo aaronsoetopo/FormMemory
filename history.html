@@ -15,6 +15,7 @@
         <p id="count" class="count" aria-live="polite">Loading…</p>
       </div>
       <div class="actions">
+        <a href="options.html" class="btn">Options</a>
         <button type="button" id="export" class="btn">Export JSON</button>
         <span id="delete-all-slot"></span>
       </div>
@@ -25,6 +26,41 @@
       <span class="privacy-note">Entries are stored in this browser's extension storage. FormMemory has no server and no account.</span>
     </p>
 
+    <!-- Ask your history section -->
+    <section class="ask-section" aria-label="Ask your history">
+      <form id="ask-form" class="ask-form">
+        <label for="ask-input" class="visually-hidden">Ask your history</label>
+        <div class="ask-input-row">
+          <input id="ask-input" type="text" placeholder="Ask your history… (e.g. Which clubs did I sign up for?)" autocomplete="off">
+          <button type="submit" id="ask-btn" class="btn btn-primary">Ask</button>
+        </div>
+      </form>
+
+      <div class="ask-meta">
+        <div class="ask-examples">
+          <span class="examples-label">Try:</span>
+          <button type="button" class="example-chip">Which clubs did I sign up for?</button>
+          <button type="button" class="example-chip">What was my expected graduation date?</button>
+          <button type="button" class="example-chip">What did I write for why I want to join?</button>
+        </div>
+        <p class="ask-notice">Only the entries relevant to your question are sent to Groq's API.</p>
+      </div>
+
+      <!-- Result Card -->
+      <div id="ask-result" class="ask-result" hidden>
+        <div class="ask-result-head">
+          <span class="ask-result-title">Answer</span>
+          <button type="button" id="ask-close-btn" class="btn btn-sm">Dismiss</button>
+        </div>
+        <div id="ask-answer-text" class="ask-answer-text"></div>
+        <div id="ask-sources" class="ask-sources" hidden>
+          <span class="sources-label">Sources:</span>
+          <span id="ask-source-links" class="source-links"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Keyword search box -->
     <div class="search">
       <label for="search" class="visually-hidden">Search entries</label>
       <input id="search" type="search" placeholder="Search forms, questions and answers  ( / )" autocomplete="off">

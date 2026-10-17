@@ -1,8 +1,14 @@
 import { getEntries, deleteEntry, clearAll } from "./lib/storage.js";
+import { askHistory } from "./lib/gemini.js";
 
 const DEMO_PREFIX = "demo-";
 
-const state = { entries: [], query: "", selectedId: null };
+const state = {
+  entries: [],
+  query: "",
+  selectedId: null,
+  isAsking: false,
+};
 
 const els = {
   count: document.getElementById("count"),
@@ -15,6 +21,16 @@ const els = {
   empty: document.getElementById("empty"),
   emptyMessage: document.getElementById("empty-message"),
   emptyHint: document.getElementById("empty-hint"),
+
+  // Ask section elements
+  askForm: document.getElementById("ask-form"),
+  askInput: document.getElementById("ask-input"),
+  askBtn: document.getElementById("ask-btn"),
+  askResult: document.getElementById("ask-result"),
+  askAnswerText: document.getElementById("ask-answer-text"),
+  askSources: document.getElementById("ask-sources"),
+  askSourceLinks: document.getElementById("ask-source-links"),
+  askCloseBtn: document.getElementById("ask-close-btn"),
 };
 
 // ---------- small helpers ----------
@@ -88,14 +104,16 @@ function twoStepButton({ label, confirmQuestion, confirmLabel, onConfirm }) {
   return slot;
 }
 
-// ---------- data ----------
+// ---------- search filtering & data ----------
 
 function matchesQuery(entry, query) {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  if (String(entry.formTitle).toLowerCase().includes(q)) return true;
-  return entry.fields.some(
-    (f) => f.question.toLowerCase().includes(q) || answerText(f.answer).toLowerCase().includes(q)
+  if (String(entry.formTitle || "").toLowerCase().includes(q)) return true;
+  return (entry.fields || []).some(
+    (f) =>
+      f.question.toLowerCase().includes(q) ||
+      answerText(f.answer).toLowerCase().includes(q)
   );
 }
 
@@ -111,6 +129,22 @@ async function load() {
     console.warn("[FormMemory] could not load entries", err);
     els.count.textContent = "Could not load entries.";
   }
+}
+
+// Selects an entry by ID, clearing search if it's currently hidden by the query.
+function selectEntry(id) {
+  const entry = state.entries.find((e) => e.id === id);
+  if (!entry) return;
+
+  if (state.query && !matchesQuery(entry, state.query)) {
+    state.query = "";
+    els.search.value = "";
+  }
+  state.selectedId = id;
+  render();
+
+  // Scroll detail card into view smoothly
+  els.detail.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // ---------- render ----------
@@ -218,7 +252,7 @@ function renderDetail(entry) {
   );
   els.detail.append(head);
 
-  entry.fields.forEach((field) => els.detail.append(renderAnswer(field)));
+  (entry.fields || []).forEach((field) => els.detail.append(renderAnswer(field)));
 }
 
 function renderAnswer(field) {
@@ -270,7 +304,6 @@ async function copyText(text, button) {
 
 async function removeEntry(id) {
   try {
-    // After deleting, select the entry that takes its place in the list.
     const visible = visibleEntries();
     const index = visible.findIndex((e) => e.id === id);
     const next = visible[index + 1] || visible[index - 1];
@@ -302,6 +335,69 @@ function exportJson() {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+// ---------- Ask your history (Gemini) ----------
+
+async function handleAsk(question) {
+  const q = (question || "").trim();
+  if (!q) return;
+
+  state.isAsking = true;
+  els.askBtn.disabled = true;
+  els.askResult.hidden = false;
+  els.askAnswerText.className = "ask-answer-text loading-pulse";
+  els.askAnswerText.textContent = "Thinking… searching relevant form entries with Groq";
+  els.askSources.hidden = true;
+  els.askSourceLinks.replaceChildren();
+
+  try {
+    const result = await askHistory(q, state.entries);
+
+    els.askAnswerText.className = "ask-answer-text";
+    els.askAnswerText.textContent = result.answer;
+
+    if (result.sourceEntryIds && result.sourceEntryIds.length) {
+      els.askSources.hidden = false;
+      result.sourceEntryIds.forEach((id) => {
+        const entry = state.entries.find((e) => e.id === id);
+        const label = entry ? `${entry.formTitle} (${formatDate(entry.submittedAt)})` : `Entry ${id.slice(0, 8)}`;
+        const btn = el("button", "source-btn", label);
+        btn.type = "button";
+        btn.title = "View this entry in detail";
+        btn.addEventListener("click", () => selectEntry(id));
+        els.askSourceLinks.append(btn);
+      });
+    } else {
+      els.askSources.hidden = true;
+    }
+  } catch (err) {
+    console.warn("[FormMemory] Ask error", err);
+    els.askAnswerText.className = "ask-answer-text";
+    els.askAnswerText.textContent = `Could not get answer: ${err.message}`;
+    els.askSources.hidden = true;
+  } finally {
+    state.isAsking = false;
+    els.askBtn.disabled = false;
+  }
+}
+
+els.askForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  handleAsk(els.askInput.value);
+});
+
+els.askCloseBtn.addEventListener("click", () => {
+  els.askResult.hidden = true;
+  els.askAnswerText.textContent = "";
+  els.askSourceLinks.replaceChildren();
+});
+
+document.querySelectorAll(".example-chip").forEach((chip) => {
+  chip.addEventListener("click", () => {
+    els.askInput.value = chip.textContent.trim();
+    handleAsk(els.askInput.value);
+  });
+});
+
 // ---------- wiring ----------
 
 els.deleteAllSlot.append(
@@ -315,14 +411,19 @@ els.deleteAllSlot.append(
 
 els.exportBtn.addEventListener("click", exportJson);
 
+// Instant keyword search as user types
 els.search.addEventListener("input", () => {
   state.query = els.search.value;
   render();
 });
 
-// "/" jumps to the search box, like many web apps.
+// "/" jumps to search box, unless already typing in an input
 document.addEventListener("keydown", (event) => {
-  if (event.key === "/" && document.activeElement !== els.search) {
+  if (
+    event.key === "/" &&
+    document.activeElement !== els.search &&
+    document.activeElement !== els.askInput
+  ) {
     event.preventDefault();
     els.search.focus();
   }

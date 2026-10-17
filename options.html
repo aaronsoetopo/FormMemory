@@ -6,34 +6,182 @@
   <meta name="color-scheme" content="light dark">
   <title>FormMemory – Options</title>
   <style>
-    :root { --bg: #f6f5f1; --surface: #fff; --text: #16181b; --muted: #4f565e; --border: #d6d3c8; --accent: #0b5d57; }
-    @media (prefers-color-scheme: dark) {
-      :root { --bg: #111315; --surface: #1a1d20; --text: #eef0f2; --muted: #aab1b9; --border: #2f353b; --accent: #72d6ca; }
+    :root {
+      --bg: #f6f5f1;
+      --surface: #ffffff;
+      --surface-2: #efede6;
+      --text: #16181b;
+      --muted: #4f565e;
+      --border: #d6d3c8;
+      --accent: #0b5d57;
+      --accent-soft: #dcefec;
+      --danger: #a3261c;
+      --success: #1b6c3b;
     }
-    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-    main { max-width: 640px; margin: 48px auto; padding: 0 20px; }
-    h1 { margin: 0 0 8px; letter-spacing: -0.02em; }
-    section { margin-top: 28px; padding: 22px 24px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111315;
+        --surface: #1a1d20;
+        --surface-2: #23272b;
+        --text: #eef0f2;
+        --muted: #aab1b9;
+        --border: #2f353b;
+        --accent: #72d6ca;
+        --accent-soft: #173a36;
+        --danger: #ff9a90;
+        --success: #5cd28e;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    main {
+      max-width: 680px;
+      margin: 48px auto;
+      padding: 0 20px 60px;
+    }
+    .header-link {
+      display: inline-block;
+      margin-bottom: 16px;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .header-link:hover { text-decoration: underline; }
+    h1 { margin: 0 0 6px; letter-spacing: -0.02em; font-size: 28px; }
+    .subtitle { margin: 0 0 24px; color: var(--muted); }
+    section {
+      margin-top: 24px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
     h2 { margin: 0 0 6px; font-size: 18px; }
-    p { margin: 0 0 14px; color: var(--muted); }
-    button { font: inherit; font-size: 14px; font-weight: 600; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; }
-    button:hover { border-color: var(--muted); }
+    p { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+    .field {
+      margin: 16px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+    input[type="password"],
+    input[type="text"] {
+      flex: 1;
+      font: inherit;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+    }
+    input:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .btn-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    button {
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    button:hover { background: var(--surface-2); border-color: var(--muted); }
     button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
     button:disabled { opacity: 0.5; cursor: wait; }
-    #status { margin: 14px 0 0; min-height: 1.5em; color: var(--accent); font-weight: 600; }
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover {
+      filter: brightness(1.1);
+    }
+    .status-msg {
+      margin: 10px 0 0;
+      min-height: 1.4em;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .status-success { color: var(--success); }
+    .status-error { color: var(--danger); }
+    .status-info { color: var(--accent); }
+    .note {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .note a {
+      color: var(--accent);
+    }
   </style>
 </head>
 <body>
   <main>
+    <a href="history.html" class="header-link">← Back to History</a>
     <h1>FormMemory Options</h1>
-    <p>API keys and privacy settings will go here.</p>
+    <p class="subtitle">Configure AI integration and manage test data. Settings are stored locally in your browser.</p>
+
+    <section id="gemini-section">
+      <h2>Groq API Key</h2>
+      <p>Needed for the "Ask your history" AI feature. Your key is stored strictly in <code>chrome.storage.local</code> and never sent anywhere except directly to Groq's endpoint.</p>
+      
+      <div class="field">
+        <label for="gemini-key">API Key</label>
+        <div class="input-row">
+          <input type="password" id="gemini-key" placeholder="gsk_..." autocomplete="off" spellcheck="false">
+          <button type="button" id="toggle-key-visibility" title="Show/hide key">Show</button>
+        </div>
+        <div class="note">Get a free API key from Groq Console at <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer">console.groq.com/keys</a>.</div>
+      </div>
+
+      <div class="field" id="model-field">
+        <label for="model-select">Active Chat Model</label>
+        <select id="model-select" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 14px;">
+          <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (Fast default)</option>
+        </select>
+        <div class="note">Automatically discovers and lists chat models available on your account.</div>
+      </div>
+
+      <div class="btn-row">
+        <button type="button" id="save-key" class="btn-primary">Save key</button>
+        <button type="button" id="test-key">Test key</button>
+      </div>
+      <p id="key-status" class="status-msg" role="status"></p>
+    </section>
 
     <section id="demo-section">
       <h2>Demo data</h2>
-      <p>Load 12 fake entries across 4 forms to try out the history page. Demo entries are tagged “Demo”, and clearing them never touches your real entries.</p>
-      <button type="button" id="load-demo">Load demo data</button>
-      <button type="button" id="clear-demo">Clear demo data</button>
-      <p id="status" role="status"></p>
+      <p>Load 12 fake entries across 4 forms to try out the history and ask features. Demo entries are tagged “Demo”, and clearing them never touches your real entries.</p>
+      <div class="btn-row">
+        <button type="button" id="load-demo">Load demo data</button>
+        <button type="button" id="clear-demo">Clear demo data</button>
+      </div>
+      <p id="demo-status" class="status-msg" role="status"></p>
     </section>
   </main>
   <script type="module" src="options.js"></script>
