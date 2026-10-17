@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "FormMemory",
+  "version": "0.1.0",
+  "description": "Remembers what you typed into Google Forms and lets you search it later.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://docs.google.com/forms/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://docs.google.com/forms/*"],
+      "js": ["content/capture.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_page": "options.html",
+  "action": {}
+}
