@@ -8,18 +8,19 @@
   "content_scripts": [
     {
       "matches": ["https://docs.google.com/forms/*"],
-      "js": ["content/capture.js"],
+      "js": ["content/capture.js", "content/suggest.js"],
       "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["lib/storage.js"],
+      "resources": ["lib/storage.js", "lib/gemini.js"],
       "matches": ["https://docs.google.com/*"]
     }
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "options_page": "options.html",
   "action": {}
