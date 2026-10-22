@@ -369,11 +369,13 @@ Each prompt starts with `Read PROJECT_BRIEF.md first.` (omitted below to save sp
 ### Phase 0: Baseline, Groq, schema v2 (S1, about 3 h)
 
 **Goal:** a clean, audited base on Groq, with data safely upgraded. Nothing looks different yet.
-**Tool:** Claude Code for 0A and 0C, Antigravity for 0B.
+**Tool:** Claude Code for 0A, 0C, 0D and 0E. Antigravity for 0B.
+**Order:** 0A, 0B, 0C, 0D, 0E, 0F (0D and 0E come after 0C so they use the new storage layer).
 
 - [ ] `git tag hackathon-v0`, then `git switch -c v1-upgrade`
 - [ ] Replace `PROJECT_BRIEF.md` with the v2 brief (6.2), add `CLAUDE.md` (6.3)
 - [ ] Get a Groq API key at the Groq console. Store it in your password manager.
+- [ ] Copy `roadmap-v2.md` into the repo root. The brief and the 1A prompt tell the agents to read it, so it must be in the repo. Commit it together with `AUDIT.md` after 0A: `git add AUDIT.md roadmap-v2.md`, `git commit -m "Add audit and v1 roadmap"`, `git push`.
 
 **0A: Audit (Claude Code, read-only)**
 ```
@@ -413,7 +415,15 @@ Task: replace Gemini with Groq.
 6. Change the notice near the Ask box to: "Only the entries relevant to your question are sent
    to Groq's API." Make no claims about retention.
 7. On first run, delete the old stored Gemini key.
-Test: missing key, wrong key, valid key.
+8. manifest: remove lib/gemini.js from web_accessible_resources, and do NOT add lib/ai.js
+   there. Web pages must not be able to load the AI client.
+9. Every Groq fetch (Ask, Test key, Load models, and the aiFuzzyMatch fallback in
+   background.js) uses an AbortController with a 20 s timeout. Fix testApiKey, which creates
+   a signal but never passes it to fetch.
+10. history.js and options.js never call Groq directly (this includes Test key and Load
+    models). They send a message to background.js.
+Test: missing key, wrong key, valid key, and a blocked network (the request must time out
+with a friendly message instead of hanging).
 ```
 
 **0C: Schema v2 and storage layer (Claude Code, Plan)**
@@ -435,12 +445,37 @@ Task: upgrade storage to schema v2 (see roadmap-v2.md section 4.2) without losin
 No UI changes.
 ```
 
-**0D: Edge smoke test (you, 20 min)**
+**0D: Fix duplicate saves (Claude Code, after 0C)**
+Found by the audit: one submission can be saved twice.
+```
+Files: content/capture.js, lib/storage.js.
+Bug: one submission can be saved twice (the entry is rebuilt from the draft with a new UUID on
+the confirmation page). Fix: give each form-fill session one stable entry id, created when the
+draft starts and kept in the draft. The submit click and the formResponse page both build the
+entry with that same id. Make addEntry an upsert by id (replace if it exists, keep the newer
+updatedAt). After a successful save, clear the draft and its id.
+Test on Test Form 1: submit once gives exactly one entry; reloading the confirmation page still
+gives one; submitting again gives a second, separate entry.
+```
+
+**0E: Fix sensitive-field masking (Claude Code)**
+Found by the audit: masking only checks question wording, the regex is copied into three files, and "Student ID" is not masked, which breaks the rule that ID numbers are never stored.
+```
+Files: the three files that copy the sensitive regex (find them), new lib/sensitive.js,
+manifest.json (load it before capture.js).
+Move the regex into one shared lib/sensitive.js and use it everywhere. Extend it to match:
+student id, id number, id no, employee id, national id, tax id, routing number, account
+number, in addition to the current patterns. Use word boundaries so ordinary words don't
+match. Show me a list of test questions that must match ("Student ID", "Your ID number")
+and must not match ("Provide your major", "Valid email"), and confirm each result.
+```
+
+**0F: Edge smoke test (you, 20 min)**
 - [ ] Load the folder in `edge://extensions` (Developer mode, Load unpacked)
 - [ ] Fill and submit Test Form 1 in Edge. Entry saved? History page opens? Ask works with Groq?
 - [ ] Fix anything that differs from Chrome (use the bug template at the end of this file).
 
-**Done when:** AUDIT.md exists, Ask works with Groq in Chrome and Edge, and old data is intact after migration.
+**Done when:** AUDIT.md exists, Ask works with Groq in Chrome and Edge, old data is intact after migration, one submission saves exactly one entry, and a "Student ID" question is stored as "[hidden]".
 
 **Wrap up this phase (git), so you don't forget:**
 ```
@@ -1060,7 +1095,7 @@ The merge into `main` is **required** here: `main` should be the released v1.0. 
 | Groq rate limits | Show a clear message with retry time; keyword search never depends on AI |
 | Lock locks you out | Forced backup before enabling; clear no-recovery warning; ship without it if not solid |
 | Migration bug eats data | `backup_v1` copy before migrating; test with a copy of your real data first |
-| Edge differs from Chrome | Test both every phase; Phase 0D catches it early |
+| Edge differs from Chrome | Test both every phase; Phase 0F catches it early |
 | Store rejection or policy issue | Minimal permissions, accurate privacy policy, honest disclosures; fix and resubmit |
 | Scope creep | Features are ordered. Stop at any tag; v0.4 is already a good product |
 | Agent breaks something | Small commits; revert to the last tag; use the bug template below |
