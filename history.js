@@ -2,6 +2,7 @@ import { getEntries, deleteEntry, clearAll } from "./lib/storage.js";
 import { askHistory } from "./lib/gemini.js";
 
 const DEMO_PREFIX = "demo-";
+const WELCOME_KEY = "welcomeDismissed";
 
 const state = {
   entries: [],
@@ -12,6 +13,8 @@ const state = {
 
 const els = {
   count: document.getElementById("count"),
+  welcome: document.getElementById("welcome"),
+  welcomeDismiss: document.getElementById("welcome-dismiss"),
   exportBtn: document.getElementById("export"),
   deleteAllSlot: document.getElementById("delete-all-slot"),
   search: document.getElementById("search"),
@@ -81,12 +84,13 @@ function appendHighlighted(parent, text, query) {
 function twoStepButton({ label, confirmQuestion, confirmLabel, onConfirm }) {
   const slot = el("span", "confirm");
 
-  function showInitial() {
+  function showInitial(restoreFocus) {
     slot.replaceChildren();
     const button = el("button", "btn btn-danger", label);
     button.type = "button";
     button.addEventListener("click", showConfirm);
     slot.append(button);
+    if (restoreFocus) button.focus(); // the Cancel button just vanished; keep keyboard focus
   }
 
   function showConfirm() {
@@ -95,7 +99,7 @@ function twoStepButton({ label, confirmQuestion, confirmLabel, onConfirm }) {
     const no = el("button", "btn", "Cancel");
     yes.type = no.type = "button";
     yes.addEventListener("click", onConfirm);
-    no.addEventListener("click", showInitial);
+    no.addEventListener("click", () => showInitial(true));
     slot.append(el("span", "confirm-text", confirmQuestion), yes, no);
     no.focus();
   }
@@ -112,7 +116,7 @@ function matchesQuery(entry, query) {
   if (String(entry.formTitle || "").toLowerCase().includes(q)) return true;
   return (entry.fields || []).some(
     (f) =>
-      f.question.toLowerCase().includes(q) ||
+      String(f.question || "").toLowerCase().includes(q) ||
       answerText(f.answer).toLowerCase().includes(q)
   );
 }
@@ -144,7 +148,8 @@ function selectEntry(id) {
   render();
 
   // Scroll detail card into view smoothly
-  els.detail.scrollIntoView({ behavior: "smooth", block: "start" });
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  els.detail.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
 }
 
 // ---------- render ----------
@@ -208,10 +213,12 @@ function renderList(visible) {
       button.setAttribute("aria-current", String(entry.id === state.selectedId));
       const date = el("span", "entry-date", formatDate(entry.submittedAt));
       if (isDemo(entry)) date.append(el("span", "tag", "Demo"));
-      button.append(date, el("span", "entry-meta", plural(entry.fields.length, "answer")));
+      button.append(date, el("span", "entry-meta", plural((entry.fields || []).length, "answer")));
       button.addEventListener("click", () => {
         state.selectedId = entry.id;
         render();
+        // render() rebuilds the list, so put keyboard focus back on the selected entry.
+        els.list.querySelector('[aria-current="true"]')?.focus();
       });
       group.append(button);
     });
@@ -231,7 +238,7 @@ function renderDetail(entry) {
   if (isDemo(entry)) title.append(el("span", "tag", "Demo"));
 
   const meta = el("p", "detail-meta");
-  meta.append(`Submitted ${formatDateTime(entry.submittedAt)} · ${plural(entry.fields.length, "answer")}`);
+  meta.append(`Submitted ${formatDateTime(entry.submittedAt)} · ${plural((entry.fields || []).length, "answer")}`);
   if (entry.formUrl) {
     const link = el("a", "", "Open form");
     link.href = entry.formUrl;
@@ -310,6 +317,7 @@ async function removeEntry(id) {
     await deleteEntry(id);
     state.selectedId = next ? next.id : null;
     await load();
+    els.list.querySelector('[aria-current="true"]')?.focus(); // the Delete button is gone
   } catch (err) {
     console.warn("[FormMemory] delete failed", err);
   }
@@ -434,4 +442,25 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "local" && changes.entries) load();
 });
 
+// First-run welcome: shown until the user dismisses it once.
+async function initWelcome() {
+  try {
+    const result = await chrome.storage.local.get(WELCOME_KEY);
+    els.welcome.hidden = Boolean(result[WELCOME_KEY]);
+  } catch (err) {
+    console.warn("[FormMemory] could not read welcome flag", err);
+  }
+}
+
+els.welcomeDismiss.addEventListener("click", async () => {
+  els.welcome.hidden = true;
+  els.search.focus(); // the button just vanished; keep keyboard focus on the page
+  try {
+    await chrome.storage.local.set({ [WELCOME_KEY]: true });
+  } catch (err) {
+    console.warn("[FormMemory] could not save welcome flag", err);
+  }
+});
+
+initWelcome();
 load();

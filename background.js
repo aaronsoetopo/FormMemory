@@ -229,3 +229,24 @@ chrome.action.onClicked.addListener(async () => {
     await chrome.tabs.create({ url });
   }
 });
+
+// ---------- Toolbar badge: number of saved entries ----------
+
+async function updateBadge() {
+  try {
+    const { length } = await getEntries();
+    await chrome.action.setBadgeText({ text: length === 0 ? "" : length > 999 ? "999+" : String(length) });
+    await chrome.action.setBadgeBackgroundColor({ color: "#0b5d57" });
+    // White text on dark teal for contrast (setBadgeTextColor needs Chrome 110+).
+    if (chrome.action.setBadgeTextColor) await chrome.action.setBadgeTextColor({ color: "#ffffff" });
+  } catch (err) {
+    console.warn("[FormMemory] badge update failed", err);
+  }
+}
+
+chrome.runtime.onInstalled.addListener(updateBadge);
+chrome.runtime.onStartup.addListener(updateBadge);
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.entries) updateBadge();
+});
+updateBadge();

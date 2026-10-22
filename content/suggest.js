@@ -315,11 +315,13 @@
       e.stopPropagation();
       e.preventDefault();
       try {
-        chrome.runtime.sendMessage({
-          type: "ADD_DISMISSAL",
-          formId,
-          question: questionText,
-        });
+        Promise.resolve(
+          chrome.runtime.sendMessage({
+            type: "ADD_DISMISSAL",
+            formId,
+            question: questionText,
+          })
+        ).catch((err) => logError("failed to record dismissal", err));
       } catch (err) {
         logError("failed to record dismissal", err);
       }

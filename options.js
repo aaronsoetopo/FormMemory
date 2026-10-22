@@ -160,4 +160,4 @@ clearDemoBtn.addEventListener("click", async () => {
   }
 });
 
-initKey();
+initKey().catch((err) => console.warn("[FormMemory] could not load saved settings", err));

@@ -26,6 +26,17 @@
       <span class="privacy-note">Entries are stored in this browser's extension storage. FormMemory has no server and no account.</span>
     </p>
 
+    <!-- First-run welcome (shown until dismissed) -->
+    <section id="welcome" class="welcome" aria-labelledby="welcome-title" hidden>
+      <h2 id="welcome-title" class="welcome-title">Welcome to FormMemory</h2>
+      <ul class="welcome-list">
+        <li><strong>Saves:</strong> what you type into Google Forms, when you submit them.</li>
+        <li><strong>Never saves:</strong> passwords, or answers to SSN, card, passport and bank questions (shown as hidden).</li>
+        <li><strong>Data lives:</strong> only in this browser's extension storage. No server, no account.</li>
+      </ul>
+      <button type="button" id="welcome-dismiss" class="btn btn-sm">Got it</button>
+    </section>
+
     <!-- Ask your history section -->
     <section class="ask-section" aria-label="Ask your history">
       <form id="ask-form" class="ask-form">

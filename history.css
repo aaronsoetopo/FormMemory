@@ -82,6 +82,7 @@ h1 {
 .actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -160,6 +161,7 @@ input:focus-visible,
 .confirm {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   font-size: 14px;
 }
@@ -199,6 +201,31 @@ input:focus-visible,
   height: 8px;
   border-radius: 50%;
   background: var(--accent);
+}
+
+/* ---------- welcome (first run) ---------- */
+
+.welcome {
+  margin: 0 0 20px;
+  padding: 16px 20px;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.welcome[hidden] {
+  display: none;
+}
+
+.welcome-title {
+  margin: 0 0 8px;
+  font-size: 17px;
+}
+
+.welcome-list {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  font-size: 14px;
 }
 
 /* ---------- ask section ---------- */
@@ -422,6 +449,11 @@ input[type="search"]::placeholder {
   color: var(--muted);
 }
 
+.group-title span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .entry {
   display: block;
   width: 100%;
@@ -495,6 +527,7 @@ input[type="search"]::placeholder {
   margin: 0;
   font-size: 22px;
   letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
 }
 
 .detail-meta {
@@ -623,5 +656,25 @@ mark {
 
   .ask-input-row {
     flex-direction: column;
+  }
+}
+
+/* Very narrow (about 320px, or heavy zoom): put the Copy button under its answer. */
+@media (max-width: 480px) {
+  .answer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .answer .btn {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+    margin-top: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ask-answer-text.loading-pulse {
+    animation: none;
   }
 }

@@ -88,7 +88,8 @@
       border-radius: 8px;
       padding: 9px 12px;
     }
-    input:focus-visible {
+    input:focus-visible,
+    select:focus-visible {
       outline: 3px solid var(--accent);
       outline-offset: 2px;
     }
@@ -120,6 +121,10 @@
     }
     .btn-primary:hover {
       filter: brightness(1.1);
+      background: var(--accent);
+    }
+    @media (prefers-color-scheme: dark) {
+      .btn-primary { color: #111315; }
     }
     .status-msg {
       margin: 10px 0 0;
@@ -137,6 +142,12 @@
     }
     .note a {
       color: var(--accent);
+    }
+    input[type="password"],
+    input[type="text"] { min-width: 0; }
+    @media (max-width: 480px) {
+      main { margin: 24px auto; padding: 0 12px 40px; }
+      section { padding: 16px; }
     }
   </style>
 </head>
